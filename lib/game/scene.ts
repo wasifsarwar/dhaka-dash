@@ -65,6 +65,8 @@ export function mountGame(
 
   class DashScene extends Phaser.Scene {
     road!: Phaser.GameObjects.Graphics;
+    aura!: Phaser.GameObjects.Graphics;
+    streetSigns: Phaser.GameObjects.Text[] = [];
     player!: Phaser.GameObjects.Image;
     objects = new Map<number, Phaser.GameObjects.Image>();
     pickupText!: Phaser.GameObjects.Text;
@@ -72,13 +74,37 @@ export function mountGame(
       super('DhakaDash');
     }
 
+    preload() {
+      this.load.image('cng-dhaka', './cng-v1.1.png');
+    }
+
     create() {
       if (disposed) return;
       sceneReady = true;
       this.makeTextures();
       this.road = this.add.graphics();
+      this.aura = this.add.graphics().setDepth(2);
+      const signs = ['চা\nCHA', 'ঢাকা\nDHAKA', 'ঝালমুড়ি', 'ফুচকা', 'মিরপুর', 'পুরান\nঢাকা'];
+      this.streetSigns = signs.map((label, index) =>
+        this.add
+          .text(index % 2 ? 390 : 28, 0, label, {
+            fontFamily: 'Arial',
+            fontSize: '10px',
+            color: '#fff1c2',
+            backgroundColor: index % 2 ? '#a6462e' : '#194d3c',
+            padding: { x: 3, y: 5 },
+            align: 'center',
+          })
+          .setOrigin(0.5)
+          .setDepth(1),
+      );
       this.player = this.add
-        .image(WORLD.lanes[1], WORLD.playerY, 'cng')
+        .image(
+          WORLD.lanes[1],
+          WORLD.playerY,
+          this.textures.exists('cng-dhaka') ? 'cng-dhaka' : 'cng',
+        )
+        .setDisplaySize(76, 87)
         .setDepth(3);
       this.pickupText = this.add
         .text(210, WORLD.playerY - 65, '+50 CHA!', {
@@ -185,6 +211,37 @@ export function mountGame(
       painter.lineBetween(20, 4, 18, 9);
       painter.lineBetween(27, 3, 25, 8);
       save('cha', 48, 48);
+      for (const [kind, color, symbol] of [
+        ['jhalmuri', 0xffb64e, 'J'],
+        ['shield', 0x83e0ce, 'R'],
+      ] as const) {
+        painter.fillStyle(color, 0.2);
+        painter.fillCircle(24, 24, 24);
+        painter.fillStyle(0x14392e);
+        painter.fillCircle(24, 24, 19);
+        painter.lineStyle(3, color);
+        painter.strokeCircle(24, 24, 19);
+        const label = this.make
+          .text({
+            x: 24,
+            y: 24,
+            text: symbol,
+            style: {
+              fontFamily: 'Arial',
+              fontSize: '25px',
+              fontStyle: 'bold',
+              color: kind === 'jhalmuri' ? '#ffb64e' : '#83e0ce',
+            },
+          })
+          .setOrigin(0.5);
+        const texture = this.add.renderTexture(0, 0, 48, 48);
+        texture.draw(painter);
+        texture.draw(label);
+        texture.saveTexture(kind);
+        texture.destroy();
+        label.destroy();
+        painter.clear();
+      }
       painter.destroy();
     }
 
@@ -245,6 +302,32 @@ export function mountGame(
       const events = stepRun(state, delta / 1000, random);
       if (state.mode === 'ready') state.scroll += Math.min(delta, 50) * 0.025;
       this.drawRoad();
+      this.streetSigns.forEach((sign, index) =>
+        sign.setY(((index * 130 + state.scroll) % 780) - 60),
+      );
+      this.aura.clear();
+      if (state.boostLeft > 0 || state.shieldLeft > 0) {
+        const color = state.boostLeft > 0 ? 0xffb64e : 0x83e0ce;
+        this.aura.lineStyle(3, color, 0.9);
+        this.aura.strokeEllipse(state.playerX, WORLD.playerY, 80, 114);
+        this.aura.fillStyle(color, 0.12);
+        this.aura.fillEllipse(state.playerX, WORLD.playerY, 80, 114);
+        if (state.boostLeft > 0) {
+          this.aura.lineStyle(3, color, 0.65);
+          this.aura.lineBetween(
+            state.playerX - 17,
+            WORLD.playerY + 50,
+            state.playerX - 17,
+            WORLD.playerY + 82,
+          );
+          this.aura.lineBetween(
+            state.playerX + 17,
+            WORLD.playerY + 50,
+            state.playerX + 17,
+            WORLD.playerY + 82,
+          );
+        }
+      }
       this.player.setPosition(state.playerX, WORLD.playerY);
       this.player.setAngle(
         state.mode === 'crashed'
@@ -272,10 +355,23 @@ export function mountGame(
         sprite.setY(object.y);
       }
       for (const event of events) {
-        audio.play(event.type);
-        if (event.type === 'pickup') {
+        audio.play(
+          event.type === 'powerup' || event.type === 'deflect'
+            ? 'pickup'
+            : event.type,
+        );
+        if (event.type !== 'crash') {
           this.tweens.killTweensOf(this.pickupText);
           this.pickupText
+            .setText(
+              event.type === 'pickup'
+                ? '+50 CHA!'
+                : event.type === 'deflect'
+                  ? 'BACHLAM!'
+                  : event.kind === 'jhalmuri'
+                    ? 'JHALMURI RUSH!'
+                    : 'RICKSHAW SHIELD!',
+            )
             .setPosition(state.playerX, WORLD.playerY - 57)
             .setAlpha(1);
           this.tweens.add({

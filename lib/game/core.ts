@@ -5,7 +5,19 @@ export const WORLD = {
   lanes: [118, 210, 302],
 } as const;
 export type RunMode = 'ready' | 'running' | 'paused' | 'crashed';
-export type ObjectKind = 'bus' | 'car' | 'pothole' | 'barrier' | 'cha';
+export type PowerupKind = 'jhalmuri' | 'shield';
+export type ObjectKind =
+  | 'bus'
+  | 'car'
+  | 'pothole'
+  | 'barrier'
+  | 'cha'
+  | PowerupKind;
+export const POWERUPS = {
+  boostSeconds: 4,
+  shieldSeconds: 6,
+  boostMultiplier: 1.45,
+} as const;
 export type Direction = -1 | 1;
 export interface RoadObject {
   id: number;
@@ -24,12 +36,18 @@ export interface RunState {
   speed: number;
   scroll: number;
   spawnIn: number;
+  powerupIn: number;
+  nextPowerup: PowerupKind;
+  boostLeft: number;
+  shieldLeft: number;
   safeLane: number;
   nextId: number;
   objects: RoadObject[];
   crashCause: ObjectKind | null;
 }
 export interface RunSnapshot {
+  boostLeft: number;
+  shieldLeft: number;
   mode: RunMode;
   score: number;
   distance: number;
@@ -40,6 +58,8 @@ export interface RunSnapshot {
 }
 export type GameEvent =
   | { type: 'pickup' }
+  | { type: 'powerup'; kind: PowerupKind }
+  | { type: 'deflect' }
   | { type: 'crash'; kind: ObjectKind };
 export const HITBOXES: Record<ObjectKind, { width: number; height: number }> = {
   bus: { width: 42, height: 91 },
@@ -47,6 +67,8 @@ export const HITBOXES: Record<ObjectKind, { width: number; height: number }> = {
   pothole: { width: 43, height: 22 },
   barrier: { width: 49, height: 21 },
   cha: { width: 34, height: 34 },
+  jhalmuri: { width: 38, height: 38 },
+  shield: { width: 38, height: 38 },
 };
 
 export function createRun(): RunState {
@@ -61,6 +83,10 @@ export function createRun(): RunState {
     speed: 220,
     scroll: 0,
     spawnIn: 1,
+    powerupIn: 5,
+    nextPowerup: 'jhalmuri',
+    boostLeft: 0,
+    shieldLeft: 0,
     safeLane: 1,
     nextId: 1,
     objects: [],
@@ -71,6 +97,8 @@ export function createRun(): RunState {
 export function snapshot(state: RunState): RunSnapshot {
   return {
     mode: state.mode,
+    boostLeft: state.boostLeft,
+    shieldLeft: state.shieldLeft,
     score: state.score,
     distance: Math.floor(state.distance),
     cha: state.cha,
@@ -115,7 +143,17 @@ export function spawnWave(state: RunState, random: () => number) {
             : 'barrier';
     state.objects.push({ id: state.nextId++, kind, lane, y: -80 });
   }
-  if (random() < 0.65)
+  if (state.powerupIn <= 0) {
+    state.objects.push({
+      id: state.nextId++,
+      kind: state.nextPowerup,
+      lane: state.safeLane,
+      y: -80,
+    });
+    state.nextPowerup =
+      state.nextPowerup === 'jhalmuri' ? 'shield' : 'jhalmuri';
+    state.powerupIn = 9;
+  } else if (random() < 0.65)
     state.objects.push({
       id: state.nextId++,
       kind: 'cha',
@@ -133,8 +171,13 @@ export function stepRun(
     return [];
   const delta = Math.min(seconds, 0.05);
   const events: GameEvent[] = [];
+  state.boostLeft = Math.max(0, state.boostLeft - delta);
+  state.shieldLeft = Math.max(0, state.shieldLeft - delta);
+  state.powerupIn -= delta;
   state.elapsed += delta;
-  state.speed = Math.min(390, 220 + state.elapsed * 2.5);
+  state.speed =
+    Math.min(390, 220 + state.elapsed * 2.5) *
+    (state.boostLeft > 0 ? POWERUPS.boostMultiplier : 1);
   const advance = state.speed * delta;
   state.scroll += advance;
   state.distance += advance / 10;
@@ -158,6 +201,14 @@ export function stepRun(
       state.cha += 1;
       object.y = WORLD.height + 200;
       events.push({ type: 'pickup' });
+    } else if (object.kind === 'jhalmuri' || object.kind === 'shield') {
+      if (object.kind === 'jhalmuri') state.boostLeft = POWERUPS.boostSeconds;
+      else state.shieldLeft = POWERUPS.shieldSeconds;
+      object.y = WORLD.height + 200;
+      events.push({ type: 'powerup', kind: object.kind });
+    } else if (state.boostLeft > 0 || state.shieldLeft > 0) {
+      object.y = WORLD.height + 200;
+      events.push({ type: 'deflect' });
     } else {
       state.mode = 'crashed';
       state.crashCause = object.kind;

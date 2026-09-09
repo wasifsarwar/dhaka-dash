@@ -1,4 +1,4 @@
-# Dhaka Dash · 1.0.0
+# Dhaka Dash · 1.1.0
 
 A flight-built, single-player arcade game: steer a green CNG through three lanes of Dhaka traffic, collect cha, and chase a device-local high score.
 
@@ -26,9 +26,17 @@ Once dependencies are installed, development and gameplay work without internet.
 
 ## Game rules
 
-One crash ends a run. Each cha adds 50 points; each whole distance meter adds one point. Traffic gets faster up to a cap. Every wave has a safe lane within one lane of the previous safe lane. Cha spawns in that safe lane. Hitboxes are intentionally smaller than sprites.
+An unprotected crash ends a run. Each cha adds 50 points; each whole distance meter adds one point. Traffic gets faster up to a cap. Every wave has a safe lane within one lane of the previous safe lane. Collectibles spawn in that safe lane. Hitboxes are intentionally smaller than sprites.
 
-High scores and sound preferences live in this browser's localStorage. If storage is unavailable, play still works and the best remains in memory for the session. There is no server leaderboard, account, multiplayer, or backend in 1.0.0.
+### New in 1.1.0
+
+- Reference-based green CNG sprite with a tall windshield, open passenger side, cream seats, and a single front wheel.
+- Scrolling Bangla roadside signs and rotating neighborhood labels (an arcade backdrop, not a geographic route).
+- **Jhalmuri Rush (orange J):** 4 seconds at 1.45× speed with immunity, earning distance points faster.
+- **Rickshaw Shield (mint R):** 6 seconds of immunity at normal speed. Protected collisions clear the obstacle without ending the run.
+- Power-ups activate on pickup, alternate on a roughly 9-second spawn schedule after the first 5 seconds, and show countdowns. Recollecting refreshes duration rather than adding time. Effects can overlap, pause with the game, and reset on restart.
+
+High scores and sound preferences live in this browser's localStorage. Existing personal bests are retained across this update. If storage is unavailable, play still works and the best remains in memory for the session. There is no server leaderboard, account, multiplayer, or backend.
 
 ## Architecture
 
@@ -68,9 +76,13 @@ To release an update: edit locally, commit, and push to `main` (or merge a check
 
 ## Artwork
 
-`public/og.png` was created using the built-in ImageGen tool. Brief: a vintage Bangladesh arcade/travel poster, ivory/forest-green/terracotta/mustard, with a green CNG and the exact text “DHAKA DASH” and “ONE CNG. THREE LANES. ENDLESS CHAOS.” Game sprites are procedural Phaser graphics, independent of this poster.
+`public/cng-v1.1.png` was generated with the built-in ImageGen tool using the user's two CNG photos as visual references. Final prompt: “Create a game sprite using the TWO user reference photos of Bangladesh CNG auto rickshaws as reference images, not edit targets. Faithfully match their short chunky proportions: bright emerald green rounded upright front nose, very tall broad windshield with single diagonal wiper, dark green canvas canopy, OPEN side passenger doorway and cream bench seats, metal frame, TWO small round headlights, a single central front wheel with green mudguard and two rear wheels. White small CNG lettering on green nose. NOT a long automobile with a huge black roof. One isolated compact rickshaw, crisp charming hand-painted arcade sprite, subtle dark outline. Show elevated front three-quarter view, front nose pointing towards upper right of image, enough frontal visibility to clearly see windshield/headlights/front wheel and open passenger side, but enough overhead view for use on vertical scrolling game road. Entire vehicle within canvas with 5% padding. GENUINE TRANSPARENT BACKGROUND alpha channel, no checkerboard, no scene, no ground plane or drop shadow, no captions outside vehicle. Keep visual silhouette readable at 70x90 pixels. Save PNG.” The asset has a verified alpha channel; the original social poster is preserved.
+
+`public/og.png` was created using the built-in ImageGen tool. Brief: a vintage Bangladesh arcade/travel poster, ivory/forest-green/terracotta/mustard, with a green CNG and the exact text “DHAKA DASH” and “ONE CNG. THREE LANES. ENDLESS CHAOS.” Traffic and pickup sprites use Phaser graphics; the player uses the separate CNG image above.
 
 ## Validation notes
+
+Version 1.1.0 mechanics checks passed for power-up pickup, protected collisions, expiry, paused timers, duration refresh, boosted speed, cha scoring, restart reset, and 10,000 safe power-up waves. Both the original and GitHub Pages builds pass. The new sprite's alpha channel was verified. Real desktop/mobile play-testing of the new artwork and balancing remains to be done.
 
 TypeScript, lint, and the production build pass. Deterministic checks covered 10,000 traffic waves, 100 two-minute automated runs, collision/pickup behavior, pause freezing, frame-delta clamping, and browser-storage failure recovery. Browser play-testing on real desktop/mobile screens remains to be done.
 

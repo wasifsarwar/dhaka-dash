@@ -15,6 +15,8 @@ import {
   Trophy,
   Volume2,
   VolumeX,
+  Shield,
+  Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -39,6 +41,8 @@ const crashMessages: Record<ObjectKind, string> = {
   pothole: 'The road won this round, mama.',
   barrier: 'Roadworks. Somehow, always roadworks.',
   cha: 'That was a good run. One more?',
+  jhalmuri: 'That was a good run. One more?',
+  shield: 'That was a good run. One more?',
 };
 
 const digits = (value: number) => String(value).padStart(5, '0');
@@ -143,7 +147,7 @@ export default function DhakaDash() {
           <i lang="bn">ঢাকা</i>
         </a>
         <span className="edition">
-          <span className="status-dot" /> FLIGHT-BUILT · V1.0.0
+          <span className="status-dot" /> FLIGHT-BUILT · V1.1.0
         </span>
       </header>
       <div className="game-layout">
@@ -237,8 +241,29 @@ export default function DhakaDash() {
               </div>
             </div>
             {run.mode !== 'ready' && (
+              <div className="powerup-hud" aria-label="Active power-ups">
+                {run.boostLeft > 0 && (
+                  <span className="powerup-boost">
+                    <Zap size={13} /> JHALMURI {run.boostLeft.toFixed(1)}s
+                  </span>
+                )}
+                {run.shieldLeft > 0 && (
+                  <span className="powerup-shield">
+                    <Shield size={13} /> SHIELD {run.shieldLeft.toFixed(1)}s
+                  </span>
+                )}
+              </div>
+            )}
+            {run.mode !== 'ready' && (
               <div className="road-caption">
-                <span>{difficulty}</span>
+                <span>
+                  {
+                    ['MIRPUR', 'FARMGATE', 'SHAHBAG', 'PURAN DHAKA'][
+                      Math.floor(run.elapsed / 25) % 4
+                    ]
+                  }{' '}
+                  · {difficulty}
+                </span>
                 <span>{run.speed} KM/H</span>
               </div>
             )}
@@ -422,14 +447,38 @@ export default function DhakaDash() {
             </div>
           </div>
           <div className="guide-item">
+            <span className="guide-icon cha-icon">
+              <Zap size={19} />
+            </span>
+            <div>
+              <strong>Jhalmuri Rush · J</strong>
+              <p>
+                Grab the orange J for 4 seconds of extra speed and crash
+                protection. More distance, more points.
+              </p>
+            </div>
+          </div>
+          <div className="guide-item">
+            <span className="guide-icon">
+              <Shield size={19} />
+            </span>
+            <div>
+              <strong>Rickshaw Shield · R</strong>
+              <p>
+                Grab the mint R for 6 seconds of immunity. Pickups activate
+                automatically; watch the countdown.
+              </p>
+            </div>
+          </div>
+          <div className="guide-item">
             <span className="guide-icon">
               <Gauge size={19} />
             </span>
             <div>
               <strong>It only gets busier</strong>
               <p>
-                Buses, barriers, potholes. One crash ends the run. There’s
-                always a gap.
+                Buses, barriers, potholes. Without protection, one crash ends
+                the run. There’s always a gap.
               </p>
             </div>
           </div>

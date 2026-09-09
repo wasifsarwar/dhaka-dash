@@ -1,6 +1,36 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
+.powerup-hud {
+  position: absolute;
+  top: 76px;
+  left: 16px;
+  right: 16px;
+  z-index: 4;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  pointer-events: none;
+}
+.powerup-hud span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 8px;
+  border: 1px solid currentColor;
+  border-radius: 5px;
+  background: #14392e;
+  font:
+    bold 10px 'Courier New',
+    monospace;
+}
+.powerup-boost {
+  color: #ffb64e;
+}
+.powerup-shield {
+  color: #83e0ce;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
