@@ -30,7 +30,7 @@ An unprotected crash ends a run. Each cha adds 50 points; each whole distance me
 
 ### New in 1.1.0
 
-- Bengali tea shops, fruit carts, vegetable stands, and grocery shops line both sidewalks. Six decorative pedestrians walk in both directions with two-frame walk cycles; their movement pauses with gameplay. They never enter the road or affect collisions. Reduced-motion mode keeps a still walking pose.
+- Bengali shops and produce stands have medium spacing (340 world pixels per side, staggered across the road). One pedestrian occasionally crosses from either curb, replacing the sidewalk crowd. First crossing is due after 16 seconds; later crossings are scheduled 22–32 seconds apart and wait for existing traffic to clear. A 1.2-second curbside warning precedes movement; traffic waves resume after the crossing leaves view. Pedestrian contact triggers an emergency stop even during boost/shield. Crossing timers, movement, and walk frames freeze on pause; restart clears the pedestrian. Reduced-motion mode keeps a still walking pose.
 
 - North-facing green CNG sprite viewed from above and behind, with a canvas canopy, open passenger sides, cream seats, and a single front wheel.
 - Scrolling Bangla roadside signs and rotating neighborhood labels (an arcade backdrop, not a geographic route).

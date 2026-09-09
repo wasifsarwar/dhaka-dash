@@ -12,6 +12,7 @@ export type ObjectKind =
   | 'pothole'
   | 'barrier'
   | 'cha'
+  | 'pedestrian'
   | PowerupKind;
 export const POWERUPS = {
   boostSeconds: 4,
@@ -26,6 +27,8 @@ export interface RoadObject {
   y: number;
 }
 export interface RunState {
+  crossingIn: number;
+  crossing: { x: number; y: number; wait: number; direction: Direction } | null;
   mode: RunMode;
   lane: number;
   playerX: number;
@@ -69,11 +72,14 @@ export const HITBOXES: Record<ObjectKind, { width: number; height: number }> = {
   cha: { width: 34, height: 34 },
   jhalmuri: { width: 38, height: 38 },
   shield: { width: 38, height: 38 },
+  pedestrian: { width: 16, height: 22 },
 };
 
 export function createRun(): RunState {
   return {
     mode: 'ready',
+    crossingIn: 16,
+    crossing: null,
     lane: 1,
     playerX: WORLD.lanes[1],
     elapsed: 0,
@@ -174,6 +180,7 @@ export function stepRun(
   state.boostLeft = Math.max(0, state.boostLeft - delta);
   state.shieldLeft = Math.max(0, state.shieldLeft - delta);
   state.powerupIn -= delta;
+  state.crossingIn -= delta;
   state.elapsed += delta;
   state.speed =
     Math.min(390, 220 + state.elapsed * 2.5) *
@@ -186,11 +193,48 @@ export function stepRun(
   state.playerX +=
     Math.sign(difference) * Math.min(Math.abs(difference), delta * 700);
   state.spawnIn -= delta;
-  if (state.spawnIn <= 0) {
+  if (state.spawnIn <= 0 && state.crossingIn > 0 && !state.crossing) {
     spawnWave(state, random);
     state.spawnIn += Math.max(1.05, 1.4 - state.elapsed * 0.004);
   }
+  if (
+    state.crossingIn <= 0 &&
+    !state.crossing &&
+    !state.objects.some(
+      (object) => !['cha', 'jhalmuri', 'shield'].includes(object.kind),
+    )
+  ) {
+    const direction: Direction = random() < 0.5 ? 1 : -1;
+    state.crossing = {
+      x: direction === 1 ? 54 : 366,
+      y: 100,
+      wait: 1.2,
+      direction,
+    };
+    state.crossingIn = 22 + random() * 10;
+  }
+  if (state.crossing) {
+    const person = state.crossing;
+    if (person.wait > 0) person.wait = Math.max(0, person.wait - delta);
+    else {
+      person.x += person.direction * 85 * delta;
+      person.y += advance;
+      if (
+        Math.abs(person.x - state.playerX) < 22.5 &&
+        Math.abs(person.y - WORLD.playerY) < 32.5
+      ) {
+        state.mode = 'crashed';
+        state.crashCause = 'pedestrian';
+        events.push({ type: 'crash', kind: 'pedestrian' });
+      }
+      if (person.y > WORLD.height + 40 || person.x < 40 || person.x > 380) {
+        state.crossing = null;
+        state.spawnIn = 0.8;
+      }
+    }
+  }
   for (const object of state.objects) {
+    if (state.mode !== 'running') break;
     object.y += advance;
     const box = HITBOXES[object.kind];
     const overlapX =

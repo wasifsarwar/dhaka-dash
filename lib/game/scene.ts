@@ -69,7 +69,8 @@ export function mountGame(
     wheels!: Phaser.GameObjects.Graphics;
     streetSigns: Phaser.GameObjects.Text[] = [];
     shops: Phaser.GameObjects.Image[] = [];
-    pedestrians: Phaser.GameObjects.Image[] = [];
+    pedestrian?: Phaser.GameObjects.Image;
+    crossingNotice!: Phaser.GameObjects.Text;
     reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
       .matches;
     player!: Phaser.GameObjects.Image;
@@ -123,17 +124,24 @@ export function mountGame(
           );
         }
       }
-      if (this.textures.exists('dhaka-walkers')) {
-        for (let index = 0; index < 6; index++) {
-          this.pedestrians.push(
-            this.add
-              .image(index % 2 ? 365 : 54, 0, 'dhaka-walkers', 0)
-              .setDisplaySize(22, 28)
-              .setAngle(index % 2 ? 180 : 0)
-              .setDepth(2),
-          );
-        }
-      }
+      if (this.textures.exists('dhaka-walkers'))
+        this.pedestrian = this.add
+          .image(54, 100, 'dhaka-walkers', 0)
+          .setDisplaySize(34, 40)
+          .setDepth(3)
+          .setVisible(false);
+      this.crossingNotice = this.add
+        .text(210, 115, '', {
+          fontFamily: 'Arial',
+          fontSize: '12px',
+          fontStyle: 'bold',
+          color: '#ffe28a',
+          backgroundColor: '#14392e',
+          padding: { x: 9, y: 6 },
+        })
+        .setOrigin(0.5)
+        .setDepth(5)
+        .setVisible(false);
       this.player = this.add
         .image(
           WORLD.lanes[1],
@@ -346,25 +354,31 @@ export function mountGame(
       this.drawRoad();
       this.shops.forEach((shop, index) => {
         const y =
-          ((Math.floor(index / 2) * 210 + (index % 2) * 100 + state.scroll) %
-            840) -
+          ((Math.floor(index / 2) * 340 + (index % 2) * 170 + state.scroll) %
+            1360) -
           90;
         shop.setY(y);
         this.streetSigns[index].setY(y + 37);
       });
-      this.pedestrians.forEach((person, index) => {
-        const walking = state.elapsed * (index % 2 ? 12 : -12);
-        const y =
-          ((((index * 137 + state.scroll + walking) % 820) + 820) % 820) - 60;
-        person
-          .setY(y)
+      const crossing = state.crossing;
+      this.pedestrian?.setVisible(!!crossing);
+      this.crossingNotice.setVisible(!!crossing && state.mode === 'running');
+      if (crossing) {
+        this.pedestrian
+          ?.setPosition(crossing.x, crossing.y)
+          .setAngle(crossing.direction === 1 ? 90 : -90)
           .setFrame(
-            (Math.floor(index / 2) % 2) * 2 +
-              (this.reducedMotion
+            (crossing.direction === 1 ? 0 : 2) +
+              (this.reducedMotion || crossing.wait > 0
                 ? 0
-                : Math.floor(state.elapsed * 5 + index) % 2),
+                : Math.floor(state.elapsed * 5) % 2),
           );
-      });
+        this.crossingNotice.setText(
+          crossing.direction === 1
+            ? '→ PEDESTRIAN CROSSING — GIVE WAY'
+            : '← PEDESTRIAN CROSSING — GIVE WAY',
+        );
+      }
       this.aura.clear();
       if (state.boostLeft > 0 || state.shieldLeft > 0) {
         const color = state.boostLeft > 0 ? 0xffb64e : 0x83e0ce;

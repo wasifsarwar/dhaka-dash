@@ -36,6 +36,7 @@ import {
 import type { GameController } from '@/lib/game/scene';
 
 const crashMessages: Record<ObjectKind, string> = {
+  pedestrian: 'Emergency stop! Give pedestrians room to cross, mama.',
   bus: 'The bus had other plans. Classic Dhaka.',
   car: 'That gap was a little too ambitious.',
   pothole: 'The road won this round, mama.',
@@ -475,10 +476,11 @@ export default function DhakaDash() {
               <Gauge size={19} />
             </span>
             <div>
-              <strong>It only gets busier</strong>
+              <strong>Give pedestrians room</strong>
               <p>
-                Buses, barriers, potholes. Without protection, one crash ends
-                the run. There’s always a gap.
+                Watch for occasional crossing warnings. Steer clear: pedestrian
+                contact ends the run even with a shield or boost. Traffic leaves
+                space during crossings.
               </p>
             </div>
           </div>
