@@ -1,8 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
 import {
   ArrowLeft,
   ArrowRight,
@@ -140,10 +138,10 @@ export default function DhakaDash() {
   return (
     <main className="dash-shell">
       <header className="masthead">
-        <Link className="wordmark" href="/" aria-label="Dhaka Dash home">
+        <a className="wordmark" href="./" aria-label="Dhaka Dash home">
           DHAKA<span>DASH</span>
           <i lang="bn">ঢাকা</i>
-        </Link>
+        </a>
         <span className="edition">
           <span className="status-dot" /> FLIGHT-BUILT · V1.0.0
         </span>
@@ -176,12 +174,11 @@ export default function DhakaDash() {
             <ArrowUpRight size={18} />
           </div>
           <figure className="postcard">
-            <Image
-              src="/og.png"
+            <img
+              src="./og.png"
               alt="Vintage Dhaka Dash poster featuring a green CNG in Dhaka traffic"
               width={1730}
               height={909}
-              unoptimized
             />
           </figure>
           <div className="dispatch">
