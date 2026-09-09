@@ -75,7 +75,7 @@ export function mountGame(
     }
 
     preload() {
-      this.load.image('cng-dhaka', './cng-v1.1.png');
+      this.load.image('cng-dhaka', './cng-north-v1.1.png');
     }
 
     create() {
@@ -104,7 +104,7 @@ export function mountGame(
           WORLD.playerY,
           this.textures.exists('cng-dhaka') ? 'cng-dhaka' : 'cng',
         )
-        .setDisplaySize(76, 87)
+        .setDisplaySize(84, 108)
         .setDepth(3);
       this.pickupText = this.add
         .text(210, WORLD.playerY - 65, '+50 CHA!', {
