@@ -66,6 +66,7 @@ export function mountGame(
   class DashScene extends Phaser.Scene {
     road!: Phaser.GameObjects.Graphics;
     aura!: Phaser.GameObjects.Graphics;
+    wheels!: Phaser.GameObjects.Graphics;
     streetSigns: Phaser.GameObjects.Text[] = [];
     player!: Phaser.GameObjects.Image;
     objects = new Map<number, Phaser.GameObjects.Image>();
@@ -75,7 +76,7 @@ export function mountGame(
     }
 
     preload() {
-      this.load.image('cng-dhaka', './cng-north-v1.1.png');
+      this.load.image('cng-dhaka', './cng-compact-v1.1.png');
     }
 
     create() {
@@ -104,8 +105,9 @@ export function mountGame(
           WORLD.playerY,
           this.textures.exists('cng-dhaka') ? 'cng-dhaka' : 'cng',
         )
-        .setDisplaySize(84, 108)
+        .setDisplaySize(80, 89)
         .setDepth(3);
+      this.wheels = this.add.graphics().setDepth(4);
       this.pickupText = this.add
         .text(210, WORLD.playerY - 65, '+50 CHA!', {
           fontFamily: 'Courier New',
@@ -251,7 +253,28 @@ export function mountGame(
       this.tweens.killAll();
       this.pickupText.setAlpha(0);
       this.player.clearTint().setAngle(0).setAlpha(1);
+      this.wheels.clear();
       this.cameras.main.resetFX();
+    }
+
+    drawWheels() {
+      const wheels = this.wheels;
+      wheels.clear();
+      if (!this.textures.exists('cng-dhaka')) return;
+      wheels
+        .setPosition(this.player.x, this.player.y)
+        .setAngle(this.player.angle);
+      const phase = (state.distance * 1.2) % 4;
+      for (const left of [-27.4, 22.1]) {
+        wheels.fillStyle(0x252724);
+        wheels.fillRoundedRect(left, 32.1, 5.3, 8.1, 1);
+        wheels.lineStyle(0.8, 0x697068, 0.8);
+        for (let tread = 0; tread < 2; tread++) {
+          const y = 32.5 + ((tread * 4 + phase) % 7);
+          wheels.lineBetween(left + 0.5, y, left + 2.65, y + 0.6);
+          wheels.lineBetween(left + 2.65, y + 0.6, left + 4.8, y);
+        }
+      }
     }
 
     drawRoad() {
@@ -339,6 +362,7 @@ export function mountGame(
             ),
       );
       const active = new Set(state.objects.map((object) => object.id));
+      this.drawWheels();
       for (const [id, sprite] of this.objects)
         if (!active.has(id)) {
           sprite.destroy();
