@@ -30,6 +30,8 @@ An unprotected crash ends a run. Each cha adds 50 points; each whole distance me
 
 ### New in 1.1.0
 
+- Bengali tea shops, fruit carts, vegetable stands, and grocery shops line both sidewalks. Six decorative pedestrians walk in both directions with two-frame walk cycles; their movement pauses with gameplay. They never enter the road or affect collisions. Reduced-motion mode keeps a still walking pose.
+
 - North-facing green CNG sprite viewed from above and behind, with a canvas canopy, open passenger sides, cream seats, and a single front wheel.
 - Scrolling Bangla roadside signs and rotating neighborhood labels (an arcade backdrop, not a geographic route).
 - **Jhalmuri Rush (orange J):** 4 seconds at 1.45× speed with immunity, earning distance points faster.
@@ -75,6 +77,8 @@ The existing `npm run dev` and `npm run build` commands retain the original Vine
 To release an update: edit locally, commit, and push to `main` (or merge a checked pull request). Watch the Actions tab for the deployment result. Failed checks do not replace the live game. To roll back, revert the offending commit and push the revert so CI deploys it. Never commit tokens or put secrets in client-side environment variables.
 
 ## Artwork
+
+Roadside assets were created using built-in ImageGen and saved as `public/dhaka-market-v1.1.png` and `public/dhaka-walkers-v1.1.png`. Both are transparent 1254×1254 atlases, split into four 627×627 frames by Phaser (no runtime image service). Market prompt: four isolated Dhaka roadside sprites in a 2×2 atlas—corrugated-roof tea shop with kettle and cups, orange-awning fruit cart with bananas/guavas/apples, green-shade vegetable stand with eggplants/tomatoes/gourds, and an old grocery shop with sacks of rice; muted emerald/terracotta/mustard/ivory, elevated arcade view, no people or text, genuine transparent background. Pedestrian prompt: two-frame north-facing walk cycles in a 2×2 atlas, cream-panjabi man in the top row and terracotta-salwar-kameez woman with green scarf in the bottom row, alternating feet, overhead/rear view, generous transparent margins, no ground or captions. Bangla signs are rendered as text rather than baked into the art.
 
 Current sprite: `public/cng-compact-v1.1.png`, created with built-in ImageGen. A compact north-facing rear view replaces the exposed fork: rounded cabin, rear window, silver bumper, and hidden front wheel. Rear-tire tread overlays move with distance traveled and share the player's steering angle. They speed up during boosts, freeze while ready/paused/crashed, and reset on restart. Earlier sprites below are retained but unused.
 

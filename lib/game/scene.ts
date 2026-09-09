@@ -68,6 +68,10 @@ export function mountGame(
     aura!: Phaser.GameObjects.Graphics;
     wheels!: Phaser.GameObjects.Graphics;
     streetSigns: Phaser.GameObjects.Text[] = [];
+    shops: Phaser.GameObjects.Image[] = [];
+    pedestrians: Phaser.GameObjects.Image[] = [];
+    reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
+      .matches;
     player!: Phaser.GameObjects.Image;
     objects = new Map<number, Phaser.GameObjects.Image>();
     pickupText!: Phaser.GameObjects.Text;
@@ -77,6 +81,14 @@ export function mountGame(
 
     preload() {
       this.load.image('cng-dhaka', './cng-compact-v1.1.png');
+      this.load.spritesheet('dhaka-market', './dhaka-market-v1.1.png', {
+        frameWidth: 627,
+        frameHeight: 627,
+      });
+      this.load.spritesheet('dhaka-walkers', './dhaka-walkers-v1.1.png', {
+        frameWidth: 627,
+        frameHeight: 627,
+      });
     }
 
     create() {
@@ -85,20 +97,43 @@ export function mountGame(
       this.makeTextures();
       this.road = this.add.graphics();
       this.aura = this.add.graphics().setDepth(2);
-      const signs = ['চা\nCHA', 'ঢাকা\nDHAKA', 'ঝালমুড়ি', 'ফুচকা', 'মিরপুর', 'পুরান\nঢাকা'];
-      this.streetSigns = signs.map((label, index) =>
-        this.add
-          .text(index % 2 ? 390 : 28, 0, label, {
-            fontFamily: 'Arial',
-            fontSize: '10px',
-            color: '#fff1c2',
-            backgroundColor: index % 2 ? '#a6462e' : '#194d3c',
-            padding: { x: 3, y: 5 },
-            align: 'center',
-          })
-          .setOrigin(0.5)
-          .setDepth(1),
-      );
+      const labels = ['চায়ের দোকান', 'তাজা ফল', 'সবজি বাজার', 'মুদির দোকান'];
+      if (this.textures.exists('dhaka-market')) {
+        for (let index = 0; index < 8; index++) {
+          const frame = (Math.floor(index / 2) + (index % 2)) % 4;
+          const x = index % 2 ? 396 : 24;
+          this.shops.push(
+            this.add
+              .image(x, 0, 'dhaka-market', frame)
+              .setDisplaySize(48, 66)
+              .setDepth(1),
+          );
+          this.streetSigns.push(
+            this.add
+              .text(x, 0, labels[frame], {
+                fontFamily: 'Arial',
+                fontSize: '7px',
+                color: '#fff1c2',
+                backgroundColor: frame % 2 ? '#98422e' : '#194d3c',
+                padding: { x: 2, y: 3 },
+                align: 'center',
+              })
+              .setOrigin(0.5)
+              .setDepth(2),
+          );
+        }
+      }
+      if (this.textures.exists('dhaka-walkers')) {
+        for (let index = 0; index < 6; index++) {
+          this.pedestrians.push(
+            this.add
+              .image(index % 2 ? 365 : 54, 0, 'dhaka-walkers', 0)
+              .setDisplaySize(22, 28)
+              .setAngle(index % 2 ? 180 : 0)
+              .setDepth(2),
+          );
+        }
+      }
       this.player = this.add
         .image(
           WORLD.lanes[1],
@@ -299,22 +334,6 @@ export function mountGame(
         graphics.fillRect(63, top, 6, 37);
         graphics.fillRect(351, top, 6, 37);
       }
-      for (let strip = -1; strip < 6; strip++) {
-        const top = strip * 160 + (offset % 160);
-        graphics.fillStyle(0x899570);
-        graphics.fillRect(3, top + 9, 31, 103);
-        graphics.fillRect(386, top + 20, 34, 111);
-        graphics.fillStyle(0x516d4f);
-        graphics.fillCircle(28, top + 33, 20);
-        graphics.fillCircle(16, top + 51, 18);
-        graphics.fillCircle(391, top + 117, 24);
-        graphics.fillStyle(0x66835a);
-        graphics.fillCircle(22, top + 31, 13);
-        graphics.fillCircle(394, top + 109, 15);
-        graphics.fillStyle(0xc5b68b, 0.7);
-        graphics.fillRect(47, top + 85, 11, 25);
-        graphics.fillRect(363, top + 41, 8, 21);
-      }
       graphics.fillStyle(0xf1dc91, 0.16);
       graphics.fillRect(79, 0, 2, 660);
       graphics.fillRect(339, 0, 2, 660);
@@ -325,9 +344,27 @@ export function mountGame(
       const events = stepRun(state, delta / 1000, random);
       if (state.mode === 'ready') state.scroll += Math.min(delta, 50) * 0.025;
       this.drawRoad();
-      this.streetSigns.forEach((sign, index) =>
-        sign.setY(((index * 130 + state.scroll) % 780) - 60),
-      );
+      this.shops.forEach((shop, index) => {
+        const y =
+          ((Math.floor(index / 2) * 210 + (index % 2) * 100 + state.scroll) %
+            840) -
+          90;
+        shop.setY(y);
+        this.streetSigns[index].setY(y + 37);
+      });
+      this.pedestrians.forEach((person, index) => {
+        const walking = state.elapsed * (index % 2 ? 12 : -12);
+        const y =
+          ((((index * 137 + state.scroll + walking) % 820) + 820) % 820) - 60;
+        person
+          .setY(y)
+          .setFrame(
+            (Math.floor(index / 2) % 2) * 2 +
+              (this.reducedMotion
+                ? 0
+                : Math.floor(state.elapsed * 5 + index) % 2),
+          );
+      });
       this.aura.clear();
       if (state.boostLeft > 0 || state.shieldLeft > 0) {
         const color = state.boostLeft > 0 ? 0xffb64e : 0x83e0ce;
