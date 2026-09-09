@@ -81,6 +81,7 @@ export function mountGame(
     }
 
     preload() {
+      this.load.image('dhaka-traffic', './dhaka-traffic-v1.2.png');
       this.load.image('cng-dhaka', './cng-compact-v1.1.png');
       this.load.spritesheet('dhaka-market', './dhaka-market-v1.1.png', {
         frameWidth: 627,
@@ -96,6 +97,13 @@ export function mountGame(
       if (disposed) return;
       sceneReady = true;
       this.makeTextures();
+      if (this.textures.exists('dhaka-traffic')) {
+        const traffic = this.textures.get('dhaka-traffic');
+        traffic.add('bus-green', 0, 160, 0, 370, 740);
+        traffic.add('bus-red', 0, 730, 0, 370, 740);
+        traffic.add('car-white', 0, 180, 775, 320, 460);
+        traffic.add('car-silver', 0, 750, 775, 320, 460);
+      }
       this.road = this.add.graphics();
       this.aura = this.add.graphics().setDepth(2);
       const labels = ['চায়ের দোকান', 'তাজা ফল', 'সবজি বাজার', 'মুদির দোকান'];
@@ -426,6 +434,26 @@ export function mountGame(
             .image(WORLD.lanes[object.lane], object.y, object.kind)
             .setDepth(object.kind === 'cha' ? 2 : 1);
           this.objects.set(object.id, sprite);
+          if (
+            (object.kind === 'bus' || object.kind === 'car') &&
+            this.textures.exists('dhaka-traffic')
+          ) {
+            const variant = object.id % 2;
+            sprite.setTexture(
+              'dhaka-traffic',
+              object.kind === 'bus'
+                ? variant
+                  ? 'bus-green'
+                  : 'bus-red'
+                : variant
+                  ? 'car-white'
+                  : 'car-silver',
+            );
+            sprite.setDisplaySize(
+              object.kind === 'bus' ? 62 : 52,
+              object.kind === 'bus' ? 124 : 76,
+            );
+          }
         }
         sprite.setY(object.y);
       }

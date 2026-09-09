@@ -134,9 +134,9 @@ export default function DhakaDash() {
   };
   const playing = run.mode === 'running';
   const difficulty =
-    run.elapsed < 22
+    run.elapsed < 45
       ? 'MORNING CRAWL'
-      : run.elapsed < 50
+      : run.elapsed < 120
         ? 'RUSH HOUR'
         : 'FULL DHAKA';
 
@@ -148,12 +148,12 @@ export default function DhakaDash() {
           <i lang="bn">ঢাকা</i>
         </a>
         <span className="edition">
-          <span className="status-dot" /> FLIGHT-BUILT · V1.1.0
+          <span className="status-dot" /> CITY EDITION · V1.2.0
         </span>
       </header>
       <div className="game-layout">
         <section className="intro-panel">
-          <p className="eyebrow">A LITTLE CHAOS. A LOT OF DHAKA.</p>
+          <p className="eyebrow">ঢাকার রাস্তায় · MADE FOR THE STREETS</p>
           <h1>
             The streets
             <br />
@@ -201,7 +201,7 @@ export default function DhakaDash() {
 
         <section className="arcade-cabinet" aria-label="Dhaka Dash arcade game">
           <div className="cabinet-top">
-            <span>DH-01 / CITY RUN</span>
+            <span>ঢাকা মেট্রো · CITY RUN</span>
             <span>BEST {digits(best.score)}</span>
           </div>
           <div
@@ -417,73 +417,88 @@ export default function DhakaDash() {
         </section>
 
         <aside className="field-notes">
-          <p className="eyebrow">THE SURVIVAL GUIDE</p>
+          <p className="eyebrow">ঢাকা লোকাল · ROUTE ০১</p>
           <h2>
-            Keep the meter
+            A little chaos.
             <br />
-            running.
+            A lot of Dhaka.
           </h2>
-          <div className="guide-item">
-            <span className="guide-icon">
-              <MoveHorizontal size={19} />
-            </span>
-            <div>
-              <strong>Find your gap</strong>
-              <p>
-                Use ← → or A / D to change lanes. On your phone, swipe or tap
-                the arrows.
-              </p>
-            </div>
+          <div className="route-board">
+            <span>MIRPUR</span>
+            <span>FARMGATE</span>
+            <span>SHAHBAG</span>
+            <span>PURAN DHAKA</span>
           </div>
-          <div className="guide-item">
-            <span className="guide-icon cha-icon">
-              <Coffee size={19} />
-            </span>
-            <div>
-              <strong>Cha is fuel for the soul</strong>
-              <p>
-                Collect a cup for <b>+50 points.</b> Your distance adds points,
-                too.
-              </p>
+          <p className="quick-guide">
+            Steer with ← → or A / D. On mobile, swipe or tap. Grab cha, watch
+            for crossings, and keep your meter running.
+          </p>
+          <details className="survival-details">
+            <summary>
+              How to play &amp; power-ups <span>খেলার নিয়ম</span>
+            </summary>
+            <div className="guide-item">
+              <span className="guide-icon">
+                <MoveHorizontal size={19} />
+              </span>
+              <div>
+                <strong>Find your gap</strong>
+                <p>
+                  Use ← → or A / D to change lanes. On your phone, swipe or tap
+                  the arrows.
+                </p>
+              </div>
             </div>
-          </div>
-          <div className="guide-item">
-            <span className="guide-icon cha-icon">
-              <Zap size={19} />
-            </span>
-            <div>
-              <strong>Jhalmuri Rush · J</strong>
-              <p>
-                Grab the orange J for 4 seconds of extra speed and crash
-                protection. More distance, more points.
-              </p>
+            <div className="guide-item">
+              <span className="guide-icon cha-icon">
+                <Coffee size={19} />
+              </span>
+              <div>
+                <strong>Cha is fuel for the soul</strong>
+                <p>
+                  Collect a cup for <b>+50 points.</b> Your distance adds
+                  points, too.
+                </p>
+              </div>
             </div>
-          </div>
-          <div className="guide-item">
-            <span className="guide-icon">
-              <Shield size={19} />
-            </span>
-            <div>
-              <strong>Rickshaw Shield · R</strong>
-              <p>
-                Grab the mint R for 6 seconds of immunity. Pickups activate
-                automatically; watch the countdown.
-              </p>
+            <div className="guide-item">
+              <span className="guide-icon cha-icon">
+                <Zap size={19} />
+              </span>
+              <div>
+                <strong>Jhalmuri Rush · J</strong>
+                <p>
+                  Grab the orange J for 4 seconds of extra speed and crash
+                  protection. More distance, more points.
+                </p>
+              </div>
             </div>
-          </div>
-          <div className="guide-item">
-            <span className="guide-icon">
-              <Gauge size={19} />
-            </span>
-            <div>
-              <strong>Give pedestrians room</strong>
-              <p>
-                Watch for occasional crossing warnings. Steer clear: pedestrian
-                contact ends the run even with a shield or boost. Traffic leaves
-                space during crossings.
-              </p>
+            <div className="guide-item">
+              <span className="guide-icon">
+                <Shield size={19} />
+              </span>
+              <div>
+                <strong>Rickshaw Shield · R</strong>
+                <p>
+                  Grab the mint R for 6 seconds of immunity. Pickups activate
+                  automatically; watch the countdown.
+                </p>
+              </div>
             </div>
-          </div>
+            <div className="guide-item">
+              <span className="guide-icon">
+                <Gauge size={19} />
+              </span>
+              <div>
+                <strong>Give pedestrians room</strong>
+                <p>
+                  Watch for occasional crossing warnings. Steer clear:
+                  pedestrian contact ends the run even with a shield or boost.
+                  Traffic leaves space during crossings.
+                </p>
+              </div>
+            </div>
+          </details>
           <div className="local-note">
             <span className="status-dot" />
             <div>

@@ -20,6 +20,10 @@ export const POWERUPS = {
   boostMultiplier: 1.45,
 } as const;
 export type Direction = -1 | 1;
+export function baseSpeed(elapsed: number) {
+  const progress = Math.max(0, Math.min(1, elapsed / 180));
+  return 210 + 230 * progress * progress * (3 - 2 * progress);
+}
 export interface RoadObject {
   id: number;
   kind: ObjectKind;
@@ -86,7 +90,7 @@ export function createRun(): RunState {
     distance: 0,
     cha: 0,
     score: 0,
-    speed: 220,
+    speed: 210,
     scroll: 0,
     spawnIn: 1,
     powerupIn: 5,
@@ -136,7 +140,11 @@ export function spawnWave(state: RunState, random: () => number) {
   state.safeLane = reachable[Math.floor(random() * reachable.length)];
   const blocked = [0, 1, 2].filter((lane) => lane !== state.safeLane);
   if (random() < 0.5) blocked.reverse();
-  const count = state.elapsed > 22 && random() < 0.48 ? 2 : 1;
+  const count =
+    state.elapsed > 40 &&
+    random() < Math.min(0.48, 0.2 + state.elapsed * 0.0015)
+      ? 2
+      : 1;
   for (const lane of blocked.slice(0, count)) {
     const roll = random();
     const kind: ObjectKind =
@@ -183,7 +191,7 @@ export function stepRun(
   state.crossingIn -= delta;
   state.elapsed += delta;
   state.speed =
-    Math.min(390, 220 + state.elapsed * 2.5) *
+    baseSpeed(state.elapsed) *
     (state.boostLeft > 0 ? POWERUPS.boostMultiplier : 1);
   const advance = state.speed * delta;
   state.scroll += advance;
@@ -195,7 +203,7 @@ export function stepRun(
   state.spawnIn -= delta;
   if (state.spawnIn <= 0 && state.crossingIn > 0 && !state.crossing) {
     spawnWave(state, random);
-    state.spawnIn += Math.max(1.05, 1.4 - state.elapsed * 0.004);
+    state.spawnIn += Math.max(1.1, 1.5 - state.elapsed * 0.002);
   }
   if (
     state.crossingIn <= 0 &&
@@ -218,7 +226,7 @@ export function stepRun(
     if (person.wait > 0) person.wait = Math.max(0, person.wait - delta);
     else {
       person.x += person.direction * 85 * delta;
-      person.y += advance;
+      person.y += Math.min(state.speed, 300) * delta;
       if (
         Math.abs(person.x - state.playerX) < 22.5 &&
         Math.abs(person.y - WORLD.playerY) < 32.5
