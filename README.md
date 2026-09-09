@@ -52,6 +52,14 @@ npm run lint
 npm run build
 ```
 
+## Continuous integration
+
+GitHub Actions runs `npm ci`, TypeScript checks, lint, and a production build on Node.js 24 for pushes and pull requests targeting `main`. The workflow can also be started manually from the repository's Actions tab. Actions are pinned to exact commits and receive read-only repository permissions.
+
+For each change, work locally, run the checks above, then commit and push. Use a pull request when you want checks before merging into `main`.
+
+This workflow currently validates changes only: it does not deploy them. Public hosting and automatic production deployment still require connecting a hosting account. The production build targets Cloudflare Workers; deployment must use the generated `dist/server/wrangler.json` configuration. Never commit hosting tokens or put them in client-side environment variables.
+
 ## Artwork
 
 `public/og.png` was created using the built-in ImageGen tool. Brief: a vintage Bangladesh arcade/travel poster, ivory/forest-green/terracotta/mustard, with a green CNG and the exact text “DHAKA DASH” and “ONE CNG. THREE LANES. ENDLESS CHAOS.” Game sprites are procedural Phaser graphics, independent of this poster.
