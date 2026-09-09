@@ -67,6 +67,13 @@ export function mountGame(
     road!: Phaser.GameObjects.Graphics;
     aura!: Phaser.GameObjects.Graphics;
     wheels!: Phaser.GameObjects.Graphics;
+    impact!: Phaser.GameObjects.Graphics;
+    sparks: {
+      sprite: Phaser.GameObjects.Arc;
+      age: number;
+      vx: number;
+      vy: number;
+    }[] = [];
     streetSigns: Phaser.GameObjects.Text[] = [];
     shops: Phaser.GameObjects.Image[] = [];
     pedestrian?: Phaser.GameObjects.Image;
@@ -106,6 +113,7 @@ export function mountGame(
       }
       this.road = this.add.graphics();
       this.aura = this.add.graphics().setDepth(2);
+      this.impact = this.add.graphics().setDepth(5);
       const labels = ['চায়ের দোকান', 'তাজা ফল', 'সবজি বাজার', 'মুদির দোকান'];
       if (this.textures.exists('dhaka-market')) {
         for (let index = 0; index < 8; index++) {
@@ -299,6 +307,9 @@ export function mountGame(
     }
 
     resetObjects() {
+      for (const spark of this.sparks) spark.sprite.destroy();
+      this.sparks = [];
+      this.impact.clear();
       for (const object of this.objects.values()) object.destroy();
       this.objects.clear();
       this.tweens.killAll();
@@ -388,6 +399,29 @@ export function mountGame(
         );
       }
       this.aura.clear();
+      this.impact.clear();
+      if (state.mode === 'crashed' && state.crashPoint) {
+        this.impact.lineStyle(3, 0xffb38b);
+        this.impact.strokeCircle(state.crashPoint.x, state.crashPoint.y, 38);
+        this.impact.lineBetween(
+          state.playerX,
+          WORLD.playerY,
+          state.crashPoint.x,
+          state.crashPoint.y,
+        );
+      }
+      if (state.mode === 'running') {
+        for (const spark of this.sparks) {
+          const dt = Math.min(delta / 1000, 0.05);
+          spark.age += dt;
+          spark.sprite.x += spark.vx * dt;
+          spark.sprite.y += spark.vy * dt;
+          spark.sprite.setAlpha(Math.max(0, 1 - spark.age / 0.4));
+          if (spark.age >= 0.4) spark.sprite.destroy();
+        }
+        this.sparks = this.sparks.filter((spark) => spark.age < 0.4);
+      }
+      this.tweens.timeScale = state.mode === 'paused' ? 0 : 1;
       if (state.boostLeft > 0 || state.shieldLeft > 0) {
         const color = state.boostLeft > 0 ? 0xffb64e : 0x83e0ce;
         this.aura.lineStyle(3, color, 0.9);
@@ -410,15 +444,34 @@ export function mountGame(
           );
         }
       }
+      for (const [left, duration, radius, color] of [
+        [state.boostLeft, 4, 49, 0xffb64e],
+        [state.shieldLeft, 6, 55, 0x83e0ce],
+      ]) {
+        if (left <= 0) continue;
+        this.aura.lineStyle(3, color, 0.95);
+        this.aura.beginPath();
+        this.aura.arc(
+          state.playerX,
+          WORLD.playerY,
+          radius,
+          -Math.PI / 2,
+          -Math.PI / 2 + (Math.PI * 2 * left) / duration,
+          false,
+        );
+        this.aura.strokePath();
+      }
       this.player.setPosition(state.playerX, WORLD.playerY);
       this.player.setAngle(
         state.mode === 'crashed'
           ? -13
-          : Phaser.Math.Clamp(
-              (WORLD.lanes[state.lane] - state.playerX) / 10,
-              -7,
-              7,
-            ),
+          : this.reducedMotion
+            ? 0
+            : Phaser.Math.Clamp(
+                (WORLD.lanes[state.lane] - state.playerX) / 10,
+                -7,
+                7,
+              ),
       );
       const active = new Set(state.objects.map((object) => object.id));
       this.drawWheels();
@@ -458,28 +511,49 @@ export function mountGame(
         sprite.setY(object.y);
       }
       for (const event of events) {
-        audio.play(
-          event.type === 'powerup' || event.type === 'deflect'
-            ? 'pickup'
-            : event.type,
-        );
+        audio.play(event.type === 'powerup' ? event.kind : event.type);
+        if (
+          (event.type === 'pickup' || event.type === 'powerup') &&
+          !this.reducedMotion
+        ) {
+          for (let i = 0; i < 8; i++) {
+            const angle = (i * Math.PI) / 4;
+            this.sparks.push({
+              sprite: this.add
+                .circle(
+                  state.playerX,
+                  WORLD.playerY - 20,
+                  2.5,
+                  event.type === 'powerup' && event.kind === 'shield'
+                    ? 0x83e0ce
+                    : 0xffd36b,
+                )
+                .setDepth(4),
+              age: 0,
+              vx: Math.cos(angle) * 75,
+              vy: Math.sin(angle) * 75,
+            });
+          }
+        }
         if (event.type !== 'crash') {
           this.tweens.killTweensOf(this.pickupText);
           this.pickupText
             .setText(
-              event.type === 'pickup'
-                ? '+50 CHA!'
-                : event.type === 'deflect'
-                  ? 'BACHLAM!'
-                  : event.kind === 'jhalmuri'
-                    ? 'JHALMURI RUSH!'
-                    : 'RICKSHAW SHIELD!',
+              event.type === 'near-miss'
+                ? 'CLOSE ONE, MAMA!'
+                : event.type === 'pickup'
+                  ? '+50 CHA!'
+                  : event.type === 'deflect'
+                    ? 'BACHLAM!'
+                    : event.kind === 'jhalmuri'
+                      ? 'JHALMURI RUSH!'
+                      : 'RICKSHAW SHIELD!',
             )
             .setPosition(state.playerX, WORLD.playerY - 57)
             .setAlpha(1);
           this.tweens.add({
             targets: this.pickupText,
-            y: WORLD.playerY - 110,
+            y: WORLD.playerY - (this.reducedMotion ? 57 : 110),
             alpha: 0,
             duration: 650,
           });

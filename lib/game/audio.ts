@@ -12,16 +12,34 @@ export class GameAudio {
     }
   }
 
-  play(type: 'start' | 'pickup' | 'crash' | 'horn') {
+  play(
+    type:
+      | 'start'
+      | 'pickup'
+      | 'crash'
+      | 'horn'
+      | 'jhalmuri'
+      | 'shield'
+      | 'deflect'
+      | 'near-miss',
+  ) {
     if (!this.enabled || !this.context) return;
     const notes =
-      type === 'pickup'
-        ? [660, 990]
-        : type === 'start'
-          ? [330, 440, 660]
-          : type === 'horn'
-            ? [220, 277]
-            : [100, 65];
+      type === 'jhalmuri'
+        ? [440, 660, 880, 1100]
+        : type === 'shield'
+          ? [523, 659, 784]
+          : type === 'deflect'
+            ? [330, 660]
+            : type === 'near-miss'
+              ? [740]
+              : type === 'pickup'
+                ? [660, 990]
+                : type === 'start'
+                  ? [330, 440, 660]
+                  : type === 'horn'
+                    ? [220, 277]
+                    : [100, 65];
     notes.forEach((frequency, index) => {
       const oscillator = this.context!.createOscillator();
       const volume = this.context!.createGain();

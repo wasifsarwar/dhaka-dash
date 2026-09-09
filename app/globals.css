@@ -1,6 +1,53 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
+.impact-caption {
+  position: absolute;
+  bottom: 14px;
+  left: 12px;
+  right: 12px;
+  padding: 10px;
+  background: #173d31;
+  color: #ffd5ad;
+  border: 1px solid #ffd5ad;
+  text-align: center;
+  font: bold 11px monospace;
+  z-index: 4;
+}
+.share-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.share-actions button {
+  min-height: 38px;
+  border: 1px solid #7e997e;
+  color: #f2efdf;
+  font-size: 11px;
+}
+.share-actions button:hover {
+  background: #284d3d;
+}
+.share-status {
+  min-height: 15px;
+  font-size: 10px !important;
+  margin: 6px 0 0;
+}
+.challenge-copy {
+  width: 100%;
+  min-height: 65px;
+  margin-top: 8px;
+  padding: 8px;
+  font-size: 11px;
+  background: #f2efdf;
+  color: #173d31;
+}
+.crash-overlay {
+  overflow-y: auto;
+  justify-content: safe center;
+}
+
 .powerup-hud {
   position: absolute;
   top: 76px;

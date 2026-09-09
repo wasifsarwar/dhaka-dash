@@ -1,10 +1,18 @@
-# Dhaka Dash · 1.2.0
+# Dhaka Dash · 1.3.0
 
 A flight-built arcade love letter to Dhaka. Steer a green CNG, collect cha, dodge traffic, and give pedestrians room.
 
 **Play:** https://wasifsarwar.github.io/dhaka-dash/
 
 ## This release
+
+- Frame-rate-independent eased steering with subtle lean; reduced-motion mode disables lean.
+- One-time near-miss callouts (no bonus points), small cha/power-up particle bursts, and distinct pickup/protection sounds.
+- Separate shrinking countdown rings for boost and shield; effects pause with gameplay and reset on restart.
+- Static impact marker and a 650ms crash review before results. Reduced-motion mode skips the delay and particles. Keyboard retry remains immediate.
+- **Share score** opens native text sharing or copies a challenge; if unavailable, selectable text is shown. **Save card** downloads a locally generated PNG. No account, upload, or external image service.
+
+### Retained from 1.2.0
 
 - Smooth three-minute speed ramp from 210 to 440 world pixels/second; traffic density rises gradually too.
 - Weathered green/red city buses and white/silver sedans, all facing north with unchanged collision boxes.
@@ -54,6 +62,7 @@ Follow progress in the repository's Actions tab. Failed checks leave the previou
 - `lib/game/core.ts`: deterministic simulation, speed curve, spawning, pickups, collisions, and crossings.
 - `lib/game/scene.ts`: Phaser artwork, rendering, tire animation, controls, and lifecycle.
 - `lib/game/audio.ts`, `lib/game/storage.ts`: optional procedural audio and browser persistence.
+- `lib/game/share.ts`: challenge text and browser-local score-card export.
 - `components/dhaka-dash.tsx`, `app/globals.css`: interface and responsive styling.
 - `pages-entry.tsx`, `index.html`, `vite.pages.config.ts`: static entry, social metadata, and GitHub Pages base path.
 - `app/page.tsx`, `app/layout.tsx`, `vite.config.ts`: original Vinext entry and build.
@@ -73,6 +82,8 @@ All raster artwork was created with built-in ImageGen. Active files:
 Traffic generation prompt: “Create ONE transparent game sprite atlas, square image, exactly FOUR equal cells in a 2x2 grid. Each object centered entirely inside its cell with 12% transparent margins. ALL vehicles face NORTH straight up, elevated TOP DOWN REAR view, rear bumper and red tail lights at BOTTOM, front at TOP, strictly zero diagonal yaw. TOP LEFT: weathered Dhaka city bus, green with cream roof and red/yellow painted swoosh on sides, rows of windows, roof vents, broad squared rear. TOP RIGHT: weathered Dhaka city bus, terracotta red with cream roof and green painted side stripe, roof vents, broad rear. BOTTOM LEFT: familiar white compact Japanese sedan seen from above/behind, dark windows, red rear lights. BOTTOM RIGHT: silver compact sedan same view. Crisp realistic painted arcade art matching a green Bangladesh CNG sprite, bold readable forms, restrained weathering, not photoreal backgrounds. No brand logos or text, no license text, no people, no road, no shadows outside objects, NO checkerboard. Genuine alpha transparent PNG, independent sprites, do not cross cell boundaries. Vehicles should occupy comparable cell heights with bus wider than car, buses realistically longer than sedans when scaled in game.”
 
 ## Validation and known limits
+
+1.3.0 checks passed for steering at 30/60/120 FPS, one-time near-miss events, collision position and crash freezing, paused power-up timers, reset state, challenge formatting, and mocked canvas drawing/export failure handling. TypeScript, lint, and both production builds pass. The in-app browser runtime failed to start, so real desktop/mobile play-testing, native share UI, and actual PNG visual inspection remain unverified.
 
 1.2.0 checks cover the monotonic speed curve and cap, 10,000 safe traffic waves, a simulated ten-minute run, rare crossings, pause freezing, and boosted crossing reaction bounds. The generated traffic orientation and transparency were inspected. Real desktop/mobile visual and control play-testing remains to be done.
 

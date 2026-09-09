@@ -34,6 +34,7 @@ import {
   type PersonalBest,
 } from '@/lib/game/storage';
 import type { GameController } from '@/lib/game/scene';
+import { challengeText, scoreCard } from '@/lib/game/share';
 
 const crashMessages: Record<ObjectKind, string> = {
   pedestrian: 'Emergency stop! Give pedestrians room to cross, mama.',
@@ -63,6 +64,63 @@ export default function DhakaDash() {
   const [newRecord, setNewRecord] = useState(false);
   const [storageAvailable, setStorageAvailable] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showResults, setShowResults] = useState(false);
+  const [shareStatus, setShareStatus] = useState('');
+  const [sharing, setSharing] = useState(false);
+  const [manualShare, setManualShare] = useState(false);
+
+  useEffect(() => {
+    if (run.mode !== 'crashed') return;
+    const delay = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      ? 0
+      : 650;
+    const timer = window.setTimeout(() => setShowResults(true), delay);
+    return () => window.clearTimeout(timer);
+  }, [run.mode]);
+
+  const shareResult = async () => {
+    setSharing(true);
+    const text = challengeText(run);
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'Dhaka Dash challenge', text });
+        setShareStatus('Challenge shared.');
+      } else {
+        await navigator.clipboard.writeText(text);
+        setShareStatus('Challenge copied—send it to your cousins!');
+      }
+    } catch (cause) {
+      if (cause instanceof Error && cause.name === 'AbortError')
+        setShareStatus('Sharing canceled.');
+      else {
+        setManualShare(true);
+        setShareStatus('Copy the challenge below to share it.');
+      }
+    } finally {
+      setSharing(false);
+    }
+  };
+
+  const downloadCard = async () => {
+    setSharing(true);
+    try {
+      const url = URL.createObjectURL(await scoreCard(run));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `dhaka-dash-${run.score}.png`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setShareStatus('Score card download started.');
+    } catch {
+      setShareStatus(
+        'Card export failed. You can still share the challenge text.',
+      );
+    } finally {
+      setSharing(false);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -78,6 +136,11 @@ export default function DhakaDash() {
           canvasHost.current,
           (next) => {
             if (cancelled) return;
+            if (next.mode !== previousMode.current) {
+              setShowResults(false);
+              setShareStatus('');
+              setManualShare(false);
+            }
             if (next.mode === 'crashed' && previousMode.current !== 'crashed') {
               const record = next.score > bestRef.current.score;
               setNewRecord(record);
@@ -148,7 +211,7 @@ export default function DhakaDash() {
           <i lang="bn">ঢাকা</i>
         </a>
         <span className="edition">
-          <span className="status-dot" /> CITY EDITION · V1.2.0
+          <span className="status-dot" /> CITY EDITION · V1.3.0
         </span>
       </header>
       <div className="game-layout">
@@ -320,7 +383,14 @@ export default function DhakaDash() {
                 <span className="overlay-hint">SPACE TO RESUME</span>
               </section>
             )}
-            {run.mode === 'crashed' && (
+            {run.mode === 'crashed' && !showResults && (
+              <output className="impact-caption">
+                {run.crashCause === 'pedestrian'
+                  ? 'EMERGENCY STOP · PEDESTRIAN'
+                  : `STOPPED BY ${run.crashCause?.toUpperCase()}`}
+              </output>
+            )}
+            {run.mode === 'crashed' && showResults && (
               <section
                 className="game-overlay crash-overlay"
                 aria-live="polite"
@@ -353,6 +423,32 @@ export default function DhakaDash() {
                   One more run
                 </Button>
                 <span className="overlay-hint">PRESS SPACE OR R TO RETRY</span>
+                <div className="share-actions">
+                  <Button
+                    variant="ghost"
+                    onClick={() => void shareResult()}
+                    disabled={sharing}
+                  >
+                    Share score
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => void downloadCard()}
+                    disabled={sharing}
+                  >
+                    Save card
+                  </Button>
+                </div>
+                <output className="share-status">{shareStatus}</output>
+                {manualShare && (
+                  <textarea
+                    className="challenge-copy"
+                    aria-label="Challenge text to copy"
+                    readOnly
+                    value={challengeText(run)}
+                    onFocus={(event) => event.currentTarget.select()}
+                  />
+                )}
               </section>
             )}
             {error && (

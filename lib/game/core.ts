@@ -29,8 +29,10 @@ export interface RoadObject {
   kind: ObjectKind;
   lane: number;
   y: number;
+  passed?: boolean;
 }
 export interface RunState {
+  crashPoint: { x: number; y: number } | null;
   crossingIn: number;
   crossing: { x: number; y: number; wait: number; direction: Direction } | null;
   mode: RunMode;
@@ -64,6 +66,7 @@ export interface RunSnapshot {
   crashCause: ObjectKind | null;
 }
 export type GameEvent =
+  | { type: 'near-miss' }
   | { type: 'pickup' }
   | { type: 'powerup'; kind: PowerupKind }
   | { type: 'deflect' }
@@ -82,6 +85,7 @@ export const HITBOXES: Record<ObjectKind, { width: number; height: number }> = {
 export function createRun(): RunState {
   return {
     mode: 'ready',
+    crashPoint: null,
     crossingIn: 16,
     crossing: null,
     lane: 1,
@@ -198,8 +202,8 @@ export function stepRun(
   state.distance += advance / 10;
   const target = WORLD.lanes[state.lane];
   const difference = target - state.playerX;
-  state.playerX +=
-    Math.sign(difference) * Math.min(Math.abs(difference), delta * 700);
+  state.playerX += difference * (1 - Math.exp(-22 * delta));
+  if (Math.abs(target - state.playerX) < 0.5) state.playerX = target;
   state.spawnIn -= delta;
   if (state.spawnIn <= 0 && state.crossingIn > 0 && !state.crossing) {
     spawnWave(state, random);
@@ -233,6 +237,7 @@ export function stepRun(
       ) {
         state.mode = 'crashed';
         state.crashCause = 'pedestrian';
+        state.crashPoint = { x: person.x, y: person.y };
         events.push({ type: 'crash', kind: 'pedestrian' });
       }
       if (person.y > WORLD.height + 40 || person.x < 40 || person.x > 380) {
@@ -248,6 +253,20 @@ export function stepRun(
     const overlapX =
       Math.abs(WORLD.lanes[object.lane] - state.playerX) < (box.width + 29) / 2;
     const overlapY = Math.abs(object.y - WORLD.playerY) < (box.height + 43) / 2;
+    if (!object.passed && object.y > WORLD.playerY + (box.height + 43) / 2) {
+      object.passed = true;
+      const gap =
+        Math.abs(WORLD.lanes[object.lane] - state.playerX) -
+        (box.width + 29) / 2;
+      if (
+        ['bus', 'car', 'barrier', 'pothole'].includes(object.kind) &&
+        gap >= 0 &&
+        gap < 18 &&
+        state.boostLeft === 0 &&
+        state.shieldLeft === 0
+      )
+        events.push({ type: 'near-miss' });
+    }
     if (!overlapX || !overlapY) continue;
     if (object.kind === 'cha') {
       state.cha += 1;
@@ -264,6 +283,7 @@ export function stepRun(
     } else {
       state.mode = 'crashed';
       state.crashCause = object.kind;
+      state.crashPoint = { x: WORLD.lanes[object.lane], y: object.y };
       events.push({ type: 'crash', kind: object.kind });
       break;
     }
